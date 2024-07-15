@@ -15,6 +15,7 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.keras.models import Model
 
 # data
 train_dir = 'train'
@@ -131,4 +132,67 @@ test_generator = test_datagen.flow_from_dataframe(
     batch_size=32,
     seed=42,
     shuffle=False
+)
+
+# MobileNetV2 model
+base_model = MobileNetV2(
+    input_shape=(224, 224, 3),            # Input image size
+    include_top=False,                    # model not include top layer
+    weights='imagenet',                   # weights type
+    pooling='avg',                        # type of pooling layer
+)
+
+# layer names in MobileNetV2
+# for layer in pre_trained_model.layers :
+    # print(layer.name)
+
+# Freeze all layers, except last layer
+# The goal is to train just last layer of pre trained model
+
+base_model.trainable = True
+set_trainable = False
+
+for layer in base_model.layers :
+    if layer.name == 'block_16_expand' :
+        set_trainable = True
+    if set_trainable :
+        layer.trainable = True
+    else :
+        layer.trainable = False
+
+# Add custom layers on top of the base model
+x = base_model.output
+x = layers.Flatten()(x)
+x = layers.Dense(256, activation='relu')(x)
+x = layers.Dense(128, activation='relu')(x)
+x = layers.Dense(36, activation='softmax')(x)
+
+model = tf.keras.Model(inputs=base_model.input, outputs=x)
+
+# Print the model summary
+model.summary()
+
+# Compile 
+model.compile(optimizer=optimizers.Adam(learning_rate=0.001),
+             loss='categorical_crossentropy', 
+             metrics=['accuracy'])
+
+
+# Model CheckPoint
+checkpoint_cb = ModelCheckpoint('MyModel.keras', save_best_only=True) 
+
+# Early Stoping
+earlystop_cb = EarlyStopping(patience=10, restore_best_weights=True)
+
+# ReduceLROnPlateau
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6)
+
+
+history = model.fit(
+    train_generator,
+    steps_per_epoch=len(train_generator),
+    epochs=100,
+    validation_data=validation_generator,
+    validation_steps=len(validation_generator),
+    callbacks=[checkpoint_cb, earlystop_cb, reduce_lr]
 )
