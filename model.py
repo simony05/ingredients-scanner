@@ -15,7 +15,6 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from sklearn.metrics import classification_report, confusion_matrix
-from tensorflow.keras.models import Model
 
 # data
 train_dir = 'train'
@@ -190,9 +189,7 @@ reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr
 
 history = model.fit(
     train_generator,
-    steps_per_epoch=len(train_generator),
     epochs=100,
     validation_data=validation_generator,
-    validation_steps=len(validation_generator),
     callbacks=[checkpoint_cb, earlystop_cb, reduce_lr]
 )
