@@ -38,12 +38,12 @@ def image_pyramid(image, scale = 1.5, minSize = (224, 224)):
 model = load_model("model.keras")
 
 # load input image
-orig = cv2.imread('apple.jpg')
+orig = cv2.imread('b.jpg')
 orig = imutils.resize(orig, width = 600)
 (H, W) = orig.shape[:2]
 
 # initialize image pyramid
-pyramid = image_pyramid(orig, scale = 1.5, minSize = (200, 150))
+pyramid = image_pyramid(orig, scale = 1.5, minSize = (224, 224))
 
 # initialize lists
     # ROIs generated from image pyramid and sliding window
@@ -57,7 +57,7 @@ for image in pyramid:
     scale = W / float(image.shape[1])
 
     # for each layer of image pyramid, loop over sliding window
-    for (x, y, roiOriginal) in sliding_window(image, 16, (200, 150)):
+    for (x, y, roiOriginal) in sliding_window(image, 16, (224, 224)):
         # scale (x, y) of roi in relation to original image dim
         x = int(x * scale)
         y = int(y * scale)
@@ -97,4 +97,5 @@ for i, r in enumerate(rois):
         subimg = orig[pred[2][1]:pred[2][3], pred[2][0]:pred[2][2]]
         cv2.imshow(pred[0], subimg)
 
+cv2.waitKey()
 print(results)
